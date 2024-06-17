@@ -11,14 +11,34 @@ func TestSplitOutsideRange(t *testing.T) {
 		"n[01-02]",
 		"n[0-2]",
 		"n[01,02],n03,n[05-07,09]",
-		"n[01-02],",
 	}
 	expected := [][]string{
 		{"n01", "n02"},
 		{"n[01-02]"},
 		{"n[0-2]"},
 		{"n[01,02]", "n03", "n[05-07,09]"},
-		{"n[01-02]"},
+	}
+
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got := splitOutsideRange(testInput)
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %s, want %s", got, want)
+		}
+	}
+}
+
+func TestExpandRange(t *testing.T) {
+	inputs := []string{
+		"n[01-02]",
+		"n[0-2]",
+		"n[05-07,09]",
+	}
+	expected := [][]string{
+		{"n01", "n02"},
+		{"n0", "n1", "n2"},
+		{"n05", "n06", "n07", "n09"},
 	}
 
 	for i := range inputs {
