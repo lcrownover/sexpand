@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 // splitOutsideRange splits a string on all commas that are not located
@@ -42,8 +43,11 @@ func splitOutsideRange(s string) []string {
 	return outs
 }
 
+// expandRange expands a single SLURM range notation into a list of strings
 func expandRange(s string) []string {
-
+	prefix := strings.Split(s, "[")[0]
+	fmt.Printf("prefix:		%s\n", prefix)
+	return nil
 }
 
 func SExpand(s string) ([]string, error) {
