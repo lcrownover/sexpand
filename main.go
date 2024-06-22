@@ -129,7 +129,84 @@ func expandGroup(prefix string, group string) ([]string, error) {
 	return outs, nil
 }
 
+// checkFullyExpanded returns true if no elements in the provided list of stirngs
+// contain a comma or brackets
+func checkFullyExpanded(l []string) bool {
+	for _, g := range l {
+		if strings.Contains(g, ",") {
+			return false
+		}
+		if strings.Contains(g, "-") {
+			return false
+		}
+		if strings.Contains(g, "[") {
+			return false
+		}
+		if strings.Contains(g, "]") {
+			return false
+		}
+	}
+	return true
+}
+
+// groupsToString simply joins the groups into a comma-separated string
+func groupsToString(group []string) string {
+	return strings.Join(group, ",")
+}
+
+// recurse is the main recursive runner for expanding the range notation.
+// it should receive the outer prefix and the current group notation.
+// it returns:
+// prefix string
+func recurse(allGroups []string, outerPrefix string, groupString string) ([]string, error) {
+	fmt.Printf("call to recurse\n")
+	fmt.Printf("	allGroups:		%v\n", allGroups)
+	fmt.Printf("	outerPrefix:		%s\n", outerPrefix)
+	fmt.Printf("	groupString:		%s\n", groupString)
+	newGroupStrings := splitOutsideRange(groupString)
+	fmt.Printf("	newGroupString:		%v\n", newGroupStrings)
+	// base case: 	group provided is fully expanded
+	// 				so we know that allGroups should contain everuthing
+	if checkFullyExpanded(newGroupStrings) {
+		fmt.Printf("fully expanded:\n")
+		fmt.Printf("	groupString: 		%s\n", groupString)
+		nodes := strings.Split(groupString, ",")
+		for _, n := range nodes {
+			fmt.Printf("	node: %s\n", n)
+			n = strings.TrimSpace(n)
+			if n != "" {
+				allGroups = append(allGroups, n)
+			}
+		}
+		return allGroups, nil
+	}
+	for _, ngs := range newGroupStrings {
+		fmt.Printf("	processing gs:		%s\n", ngs)
+		// if it's not fully expanded
+		// add the outer prefix to the inner prefix
+		prefix, ngs := splitPrefix(ngs)
+		prefix = fmt.Sprintf("%s%s", outerPrefix, prefix)
+		// then expand the group using the new larger prefix
+		newGroups, err := expandGroup(prefix, ngs)
+		if err != nil {
+			return []string{}, nil
+		}
+		newGroupsString := groupsToString(newGroups)
+		newAllGroups, err := recurse(allGroups, prefix, newGroupsString)
+		if err != nil {
+			return nil, fmt.Errorf("%v", err)
+		}
+		for _,g := range newAllGroups {
+			fmt.Printf("	adding: %s\n", g)
+			allGroups = append(allGroups, g)
+		}
+		// allGroups = append(allGroups, newAllGroups...)
+	}
+	return allGroups, nil
+}
+
 func SExpand(s string) ([]string, error) {
+
 	return []string{}, fmt.Errorf("not implemented")
 }
 

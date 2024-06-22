@@ -5,6 +5,30 @@ import (
 	"testing"
 )
 
+func TestGroupsToString(t *testing.T) {
+	inputs := [][]string{
+		{"n01", "n02"},
+		{"n[01-02]"},
+		{"n[0-2]"},
+		{"n[01,02]", "n03", "n[05-07,09]"},
+	}
+	expected := []string{
+		"n01,n02",
+		"n[01-02]",
+		"n[0-2]",
+		"n[01,02],n03,n[05-07,09]",
+	}
+
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got := groupsToString(testInput)
+		if got != want {
+			t.Errorf("got %s, want %s", got, want)
+		}
+	}
+}
+
 func TestSplitOutsideRange(t *testing.T) {
 	inputs := []string{
 		"n01,n02",
@@ -101,6 +125,62 @@ func TestExpandGroup(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %s, want %s", got, want)
+		}
+	}
+}
+
+func TestCheckFullyExpanded(t *testing.T) {
+	inputs := [][]string{
+		{"01-02"},
+		{"0-2", "3"},
+		{"05", "07"},
+		{"05"},
+		{"05-07,09"},
+	}
+	expected := []bool{
+		false,
+		false,
+		true,
+		true,
+		false,
+	}
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got := checkFullyExpanded(testInput)
+		if got != want {
+			t.Errorf("input %s, got %v, want %v", testInput, got, want)
+		}
+	}
+}
+
+type recurseTestCase struct {
+	input0 []string
+	input1 string
+	input2 string
+}
+
+func TestRecurse(t *testing.T) {
+	inputs := []recurseTestCase{
+		{[]string{}, "n", "[01-02]"},
+		{[]string{}, "n", "t[05-07]"},
+		{[]string{}, "n", "t[05-07,x[10-11]]"},
+	}
+	expected := [][]string{
+		{"n01", "n02"},
+		{"nt05", "nt06", "nt07"},
+		{"nt05", "nt06", "nt07", "ntx10", "ntx11"},
+	}
+
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got, err := recurse(testInput.input0, testInput.input1, testInput.input2)
+		if err != nil {
+			t.Error(err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %q, want %q", got, want)
 		}
 	}
 }
