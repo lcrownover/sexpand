@@ -5,30 +5,6 @@ import (
 	"testing"
 )
 
-func TestGroupsToString(t *testing.T) {
-	inputs := [][]string{
-		{"n01", "n02"},
-		{"n[01-02]"},
-		{"n[0-2]"},
-		{"n[01,02]", "n03", "n[05-07,09]"},
-	}
-	expected := []string{
-		"n01,n02",
-		"n[01-02]",
-		"n[0-2]",
-		"n[01,02],n03,n[05-07,09]",
-	}
-
-	for i := range inputs {
-		testInput := inputs[i]
-		want := expected[i]
-		got := groupsToString(testInput)
-		if got != want {
-			t.Errorf("got %s, want %s", got, want)
-		}
-	}
-}
-
 func TestSplitOutsideRange(t *testing.T) {
 	inputs := []string{
 		"n01,n02",

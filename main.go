@@ -53,11 +53,9 @@ func splitPrefix(group string) (string, string) {
 	fmt.Printf("	before group: 	%s\n", group)
 	prefix := ""
 	groupRange := ""
-	beforePrefix := true
+	beforePrefix := !strings.Contains(group, "[")
 
-	if !strings.Contains(group, "[") {
-		beforePrefix = false
-	}
+	
 	for _, c := range group {
 		if c == '[' {
 			beforePrefix = false
@@ -175,6 +173,8 @@ func reverse(s string) string {
 	return string(r)
 }
 
+// unwrapRange removes the leading and trailing brackets and
+// returns the resulting string.
 func unwrapRange(r string) string {
 	fmt.Printf("	before unwrap: 	%s\n", r)
 	r = strings.Replace(r, "[", "", 1)
@@ -185,15 +185,8 @@ func unwrapRange(r string) string {
 	return r
 }
 
-// func readyToExpand(r string) bool {
-// 	nr := splitOutsideRange(r)
-// 	return nr[0] == r && !needsToBeSplit(r)
-// }
-
-func needsToBeSplit(r string) bool {
-	return strings.Contains(r, ",")
-}
-
+// readyToExpand returns true if the group string does not contain any brackets
+// which signifies that the range is ready to be expanded.
 func readyToExpand(g string) bool {
 	return !strings.Contains(g, "[")
 }
