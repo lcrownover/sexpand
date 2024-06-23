@@ -53,9 +53,11 @@ func splitPrefix(group string) (string, string) {
 	fmt.Printf("	before group: 	%s\n", group)
 	prefix := ""
 	groupRange := ""
-	beforePrefix := !strings.Contains(group, "[")
+	beforePrefix := true
 
-	
+	if !strings.Contains(group, "[") {
+		beforePrefix = false
+	}
 	for _, c := range group {
 		if c == '[' {
 			beforePrefix = false
