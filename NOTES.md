@@ -20,3 +20,12 @@ n[1-3,t[5-6]]
 n1,n2,n3,nt5,nt6
 
 ```
+
+```
+
+complicated test:
+
+n[1-3,t[4-5,x[6-7]]]
+n1,n2,n3,nt4,nt5,ntx6,ntx7
+
+```
