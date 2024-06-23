@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -208,10 +210,24 @@ func recurse(nodes []string, prefix string, group string) ([]string, error) {
 }
 
 func SExpand(s string) ([]string, error) {
-
-	return []string{}, fmt.Errorf("not implemented")
+	nodes, err := recurse([]string{}, "", s)
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to expand expression '%s': %w", s, err)
+	}
+	return nodes, nil
 }
 
 func main() {
-
+	flag.Parse()
+	args := flag.Args()
+	if len(args) != 1 {
+		fmt.Fprintln(os.Stderr, "usage: provide a SLURM node range expression as the only arg")
+		os.Exit(1)
+	}
+	nodes, err := SExpand(args[0])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Println(strings.Join(nodes, ","))
 }

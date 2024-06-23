@@ -149,6 +149,29 @@ func TestUnwrapRange(t *testing.T) {
 	}
 }
 
+func TestReadyToExpand(t *testing.T) {
+	inputs := []string{
+		"t[0-2]",
+		"t[]",
+		"t",
+		"0-2",
+	}
+	expected := []bool{
+		false,
+		false,
+		true,
+		true,
+	}
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got := readyToExpand(testInput)
+		if got != want {
+			t.Errorf("input %s, got %v, want %v", testInput, got, want)
+		}
+	}
+}
+
 type recurseTestCase struct {
 	input0 []string
 	input1 string
@@ -184,59 +207,37 @@ func TestRecurse(t *testing.T) {
 	}
 }
 
-/*
-// expand_hostnames("n01,n02") -> ["n01", "n02"]
-assert_eq!(expand_hostnames("n01,n02").unwrap(), ["n01", "n02"]);
+func TestSExpand(t *testing.T) {
+	inputs := []string{
+		"n01,n02",
+		"n[01-02]",
+		"n[0-2]",
+		"n[01-05]",
+		"n[01,02],n03,n[05-07,09]",
+		"n[01,02],n03,n[05-07,09]",
+		"n[t[05-07,x[10-11]]]",
+		"n[1-2],r[[1-2],t[05-07,x[10-11]]]",
+	}
+	expected := [][]string{
+		{"n01", "n02"},
+		{"n01", "n02"},
+		{"n0", "n1", "n2"},
+		{"n01", "n02", "n03", "n04", "n05"},
+		{"n01", "n02", "n03", "n05", "n06", "n07", "n09"},
+		{"n01", "n02", "n03", "n05", "n06", "n07", "n09"},
+		{"nt05", "nt06", "nt07", "ntx10", "ntx11"},
+		{"n1", "n2", "r1", "r2", "rt05", "rt06", "rt07", "rtx10", "rtx11"},
+	}
 
-// expand_hostnames("n[01-02]") -> ["n01", "n02"]
-assert_eq!(expand_hostnames("n[01-02]").unwrap(), ["n01", "n02"]);
-
-// expand_hostnames("n[0-2]") -> ["n0", "n1", "n2"]
-assert_eq!(expand_hostnames("n[0-2]").unwrap(), ["n0", "n1", "n2"]);
-
-// expand_hostnames("n[01-05]") -> ["n01", "n02", "n03", "n04", "n05"]
-assert_eq!(expand_hostnames("n[01-05]").unwrap(), ["n01", "n02", "n03", "n04", "n05"]);
-
-// expand_hostnames("n[01,02],n03,n[05-07,09]") -> ["n01", "n02", "n03", "n05", "n06", "n07"]
-assert_eq!( expand_hostnames("n[01,02],n03,n[05-07,09]").unwrap(), ["n01", "n02", "n03", "n05", "n06", "n07", "n09"]);
-
-// expand_hostnames("n[01,02],n03,n[05-07,09]") -> ["n01", "n02", "n03", "n05", "n06", "n07"]
-assert_eq!( expand_hostnames("n[01,02],n03,n[05-07,09]").unwrap(), ["n01", "n02", "n03", "n05", "n06", "n07", "n09"]);
-
-// expand_hostnames("n[[01,02]-03],n[05-07,09]") -> Err
-let res = expand_hostnames("n[[01,02]-03],n[05-07,09]");
-assert!(res.is_err())
-*/
-
-// func TestSExpand(t *testing.T) {
-// 	inputs := []string{
-// 		"n01,n02",
-// 		"n[01-02]",
-// 		"n[0-2]",
-// 		"n[01-05]",
-// 		"n[01,02],n03,n[05-07,09]",
-// 		"n[01,02],n03,n[05-07,09]",
-// 		"n[[01,02]-03],n[05-07,09]",
-// 	}
-// 	expected := [][]string{
-// 		[]string{"n01", "n02"},
-// 		[]string{"n01", "n02"},
-// 		[]string{"n0", "n1", "n2"},
-// 		[]string{"n01", "n02", "n03", "n04", "n05"},
-// 		[]string{"n01", "n02", "n03", "n05", "n06", "n07", "n09"},
-// 		[]string{"n01", "n02", "n03", "n05", "n06", "n07", "n09"},
-// 		[]string{},
-// 	}
-
-// 	for i := range inputs {
-// 		testInput := inputs[i]
-// 		want := expected[i]
-// 		got, err := SExpand(testInput)
-// 		if err != nil {
-// 			t.Errorf("unexpected error %v. got %s, want %s", got, want)
-// 		}
-// 		if !reflect.DeepEqual(got, want) {
-// 			t.Errorf("got %s, want %s", got, want)
-// 		}
-// 	}
-// }
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got, err := SExpand(testInput)
+		if err != nil {
+			t.Errorf("unexpected error %v. got %s, want %s", err, got, want)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %s, want %s", got, want)
+		}
+	}
+}
