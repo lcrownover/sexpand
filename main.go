@@ -9,7 +9,6 @@ import (
 // splitOutsideRange splits a string on all commas that are not located
 // inside bracket notations.
 func splitOutsideRange(s string) []string {
-	fmt.Printf("call splitOutsideRange\n")
 	nestLevel := 0
 	outerCommaPositions := []int{}
 	outs := []string{}
@@ -42,15 +41,12 @@ func splitOutsideRange(s string) []string {
 	if len(outs) == 0 {
 		outs = append(outs, s)
 	}
-	fmt.Printf("done calling splitOutsideRange\n")
 	return outs
 }
 
 // splitPrefix takes a SLURM group range notation and returns the prefix and the notation separately
 // this function expects that there is a range notation in the group and will panic if not
 func splitPrefix(group string) (string, string) {
-	fmt.Printf("call to split prefix:\n")
-	fmt.Printf("	before group: 	%s\n", group)
 	prefix := ""
 	groupRange := ""
 	beforePrefix := true
@@ -68,9 +64,6 @@ func splitPrefix(group string) (string, string) {
 			groupRange = groupRange + string(c)
 		}
 	}
-	fmt.Printf("	after prefix: 	%s\n", prefix)
-	fmt.Printf("	after group: 	%s\n", groupRange)
-	fmt.Printf("done calling split prefix\n")
 	return prefix, groupRange
 }
 
@@ -112,9 +105,6 @@ func expandRange(r string) ([]string, error) {
 // expandGroup expands a single prefix and SLURM range notation
 // into a list of strings
 func expandGroup(prefix string, group string) ([]string, error) {
-	fmt.Printf("calling expandGroup\n")
-	fmt.Printf("	prefix: %s\n", prefix)
-	fmt.Printf("	group: %s\n", group)
 	// first we find the length of runes for the start of the range
 	group = strings.ReplaceAll(group, "[", "")
 	group = strings.ReplaceAll(group, "]", "")
@@ -137,7 +127,6 @@ func expandGroup(prefix string, group string) ([]string, error) {
 	for _, n := range expandedParts {
 		outs = append(outs, fmt.Sprintf("%s%s", prefix, n))
 	}
-	fmt.Printf("done calling expandGroup\n")
 	return outs, nil
 }
 
@@ -161,11 +150,6 @@ func checkFullyExpanded(l []string) bool {
 	return true
 }
 
-// groupsToString simply joins the groups into a comma-separated string
-func groupsToString(group []string) string {
-	return strings.Join(group, ",")
-}
-
 // reverse returns its argument string reversed rune-wise left to right.
 func reverse(s string) string {
 	r := []rune(s)
@@ -178,12 +162,10 @@ func reverse(s string) string {
 // unwrapRange removes the leading and trailing brackets and
 // returns the resulting string.
 func unwrapRange(r string) string {
-	fmt.Printf("	before unwrap: 	%s\n", r)
 	r = strings.Replace(r, "[", "", 1)
 	r = reverse(r)
 	r = strings.Replace(r, "]", "", 1)
 	r = reverse(r)
-	fmt.Printf("	after unwrap: 	%s\n", r)
 	return r
 }
 
@@ -199,38 +181,23 @@ func readyToExpand(g string) bool {
 // prefix string
 func recurse(nodes []string, prefix string, group string) ([]string, error) {
 	var err error
-	fmt.Printf("call to recurse\n")
-	fmt.Printf("	nodes:		%v\n", nodes)
-	fmt.Printf("	prefix:		%s\n", prefix)
-	fmt.Printf("	groupString:	%s\n", group)
-
 	//
 	// base case: 	group provided has no brackets, we're read to expand
 	//
 	if readyToExpand(group) {
-		fmt.Printf("ready to expand:\n")
-		fmt.Printf("	prefix: 	%s\n", prefix)
-		fmt.Printf("	group: 		%s\n", group)
 		expandedNodes, err := expandGroup(prefix, group)
-		fmt.Printf("	expanded: 	%v\n", expandedNodes)
 		if err != nil {
 			return []string{}, err
 		}
 		nodes = append(nodes, expandedNodes...)
-		fmt.Printf("base case done\n")
 		return nodes, nil
 	}
 
 	newGroups := splitOutsideRange(group)
-	fmt.Printf("	newGroups:	%v\n", newGroups)
-
 	for _, g := range newGroups {
-		fmt.Printf("	old prefix: 	%s\n", prefix)
 		np, ng := splitPrefix(g)
 		newPrefix := fmt.Sprintf("%s%s", prefix, np)
 		newGroup := unwrapRange(ng)
-		fmt.Printf("	new prefix: 	%s\n", newPrefix)
-		fmt.Printf("	new group: 	%s\n", newGroup)
 		nodes, err = recurse(nodes, newPrefix, newGroup)
 		if err != nil {
 			return []string{}, err

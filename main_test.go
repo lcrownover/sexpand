@@ -130,6 +130,25 @@ func TestCheckFullyExpanded(t *testing.T) {
 	}
 }
 
+func TestUnwrapRange(t *testing.T) {
+	inputs := []string{
+		"[0-2]",
+		"[]",
+	}
+	expected := []string{
+		"0-2",
+		"",
+	}
+	for i := range inputs {
+		testInput := inputs[i]
+		want := expected[i]
+		got := unwrapRange(testInput)
+		if got != want {
+			t.Errorf("input %s, got %v, want %v", testInput, got, want)
+		}
+	}
+}
+
 type recurseTestCase struct {
 	input0 []string
 	input1 string
