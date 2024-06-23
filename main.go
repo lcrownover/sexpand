@@ -9,6 +9,7 @@ import (
 // splitOutsideRange splits a string on all commas that are not located
 // inside bracket notations.
 func splitOutsideRange(s string) []string {
+	fmt.Printf("call splitOutsideRange\n")
 	nestLevel := 0
 	outerCommaPositions := []int{}
 	outs := []string{}
@@ -41,12 +42,15 @@ func splitOutsideRange(s string) []string {
 	if len(outs) == 0 {
 		outs = append(outs, s)
 	}
+	fmt.Printf("done calling splitOutsideRange\n")
 	return outs
 }
 
 // splitPrefix takes a SLURM group range notation and returns the prefix and the notation separately
 // this function expects that there is a range notation in the group and will panic if not
 func splitPrefix(group string) (string, string) {
+	fmt.Printf("call to split prefix:\n")
+	fmt.Printf("	before group: 	%s\n", group)
 	prefix := ""
 	groupRange := ""
 	beforePrefix := true
@@ -64,6 +68,9 @@ func splitPrefix(group string) (string, string) {
 			groupRange = groupRange + string(c)
 		}
 	}
+	fmt.Printf("	after prefix: 	%s\n", prefix)
+	fmt.Printf("	after group: 	%s\n", groupRange)
+	fmt.Printf("done calling split prefix\n")
 	return prefix, groupRange
 }
 
@@ -130,6 +137,7 @@ func expandGroup(prefix string, group string) ([]string, error) {
 	for _, n := range expandedParts {
 		outs = append(outs, fmt.Sprintf("%s%s", prefix, n))
 	}
+	fmt.Printf("done calling expandGroup\n")
 	return outs, nil
 }
 
@@ -168,104 +176,73 @@ func reverse(s string) string {
 }
 
 func unwrapRange(r string) string {
+	fmt.Printf("	before unwrap: 	%s\n", r)
 	r = strings.Replace(r, "[", "", 1)
 	r = reverse(r)
 	r = strings.Replace(r, "]", "", 1)
 	r = reverse(r)
+	fmt.Printf("	after unwrap: 	%s\n", r)
 	return r
 }
 
-func readyToExpand(r string) bool {
-	nr := splitOutsideRange(r)
-	return nr[0] == r && !needsToBeSplit(r)
-}
+// func readyToExpand(r string) bool {
+// 	nr := splitOutsideRange(r)
+// 	return nr[0] == r && !needsToBeSplit(r)
+// }
 
 func needsToBeSplit(r string) bool {
 	return strings.Contains(r, ",")
+}
+
+func readyToExpand(g string) bool {
+	return !strings.Contains(g, "[")
 }
 
 // recurse is the main recursive runner for expanding the range notation.
 // it should receive the outer prefix and the current group notation.
 // it returns:
 // prefix string
-func recurse(allGroups []string, outerPrefix string, groupString string) ([]string, error) {
+func recurse(nodes []string, prefix string, group string) ([]string, error) {
+	var err error
 	fmt.Printf("call to recurse\n")
-	fmt.Printf("	allGroups:		%v\n", allGroups)
-	fmt.Printf("	outerPrefix:		%s\n", outerPrefix)
-	fmt.Printf("	groupString:		%s\n", groupString)
+	fmt.Printf("	nodes:		%v\n", nodes)
+	fmt.Printf("	prefix:		%s\n", prefix)
+	fmt.Printf("	groupString:	%s\n", group)
 
-	fmt.Printf("	call to splitOutsideRange\n")
-	newGroupStrings := splitOutsideRange(groupString)
-	fmt.Printf("	newGroupString:		%v\n", newGroupStrings)
-
-	// base case: 	group provided is fully expanded
-	// 				so we know that allGroups should contain everuthing
-	if checkFullyExpanded(newGroupStrings) {
-		fmt.Printf("fully expanded:\n")
-		fmt.Printf("	groupString: 		%s\n", groupString)
-		nodes := strings.Split(groupString, ",")
-		allGroups = append(allGroups, nodes...)
-		return allGroups, nil
-	}
-
-	// base case:	splitOutsideRange didn't change the data
-	//				and the length of the returned slice is 1
-	//				so we can now expand the group
-	if len(newGroupStrings) == 1 && !needsToBeSplit(newGroupStrings[0]) {
-		ngs := newGroupStrings[0]
-		prefix, ngs := splitPrefix(ngs)
+	//
+	// base case: 	group provided has no brackets, we're read to expand
+	//
+	if readyToExpand(group) {
 		fmt.Printf("ready to expand:\n")
-		fmt.Printf("	groupString:		%s\n", groupString)
-		fmt.Printf("	prefix:		%s\n", prefix)
-		fmt.Printf("	expanding: 		%s\n", ngs)
-		// then expand the group
-		newNodes, err := expandGroup(prefix, ngs)
+		fmt.Printf("	prefix: 	%s\n", prefix)
+		fmt.Printf("	group: 		%s\n", group)
+		expandedNodes, err := expandGroup(prefix, group)
+		fmt.Printf("	expanded: 	%v\n", expandedNodes)
 		if err != nil {
 			return []string{}, err
 		}
-		// newGroupsString := groupsToString(newGroups)
-		// newAllGroups, err := recurse(allGroups, prefix, newGroupsString)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("%v", err)
-		// }
-		for _, g := range newNodes {
-			fmt.Printf("	ntbe adding: %s\n", g)
-			allGroups = append(allGroups, g)
-		}
-		return allGroups, nil
+		nodes = append(nodes, expandedNodes...)
+		fmt.Printf("base case done\n")
+		return nodes, nil
 	}
 
-	for _, ngs := range newGroupStrings {
-		fmt.Printf("	processing gs:		%s\n", ngs)
-		// if it's not fully expanded
-		// add the outer prefix to the inner prefix
-		prefix, ngs := splitPrefix(ngs)
-		prefix = fmt.Sprintf("%s%s", outerPrefix, prefix)
-		fmt.Printf("	new prefix: 		%s\n", prefix)
+	newGroups := splitOutsideRange(group)
+	fmt.Printf("	newGroups:	%v\n", newGroups)
 
-		// trim off the surrounding range
-		ngs = unwrapRange(ngs)
-		fmt.Printf("	unwrapped: 		%s\n", ngs)
-
-		// if it contains a "," that means it needs to be split again
-		if needsToBeSplit(ngs) {
-			fmt.Printf("	needsToBeSplit: 	%s\n", ngs)
-			newAllGroups, err := recurse(allGroups, prefix, ngs)
-			if err != nil {
-				return nil, fmt.Errorf("%v", err)
-			}
-			for _, g := range newAllGroups {
-				fmt.Printf("	ntbs adding: %s\n", g)
-				allGroups = append(allGroups, g)
-			}
-			return allGroups, nil
+	for _, g := range newGroups {
+		fmt.Printf("	old prefix: 	%s\n", prefix)
+		np, ng := splitPrefix(g)
+		newPrefix := fmt.Sprintf("%s%s", prefix, np)
+		newGroup := unwrapRange(ng)
+		fmt.Printf("	new prefix: 	%s\n", newPrefix)
+		fmt.Printf("	new group: 	%s\n", newGroup)
+		nodes, err = recurse(nodes, newPrefix, newGroup)
+		if err != nil {
+			return []string{}, err
 		}
-		
-		// normal range, expand it
-
-		// allGroups = append(allGroups, newAllGroups...)
 	}
-	return allGroups, nil
+
+	return nodes, nil
 }
 
 func SExpand(s string) ([]string, error) {

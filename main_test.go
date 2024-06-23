@@ -162,14 +162,18 @@ type recurseTestCase struct {
 
 func TestRecurse(t *testing.T) {
 	inputs := []recurseTestCase{
-		// {[]string{}, "n", "[01-02]"},
-		// {[]string{}, "n", "t[05-07]"},
+		{[]string{}, "n", "[01-02]"},
+		{[]string{}, "n", "t[05-07]"},
 		{[]string{}, "n", "t[05-07,x[10-11]]"},
+		{[]string{}, "", "n[t[05-07,x[10-11]]]"},
+		{[]string{}, "", "n[1-2],r[[1-2],t[05-07,x[10-11]]]"},
 	}
 	expected := [][]string{
-		// {"n01", "n02"},
-		// {"nt05", "nt06", "nt07"},
+		{"n01", "n02"},
+		{"nt05", "nt06", "nt07"},
 		{"nt05", "nt06", "nt07", "ntx10", "ntx11"},
+		{"nt05", "nt06", "nt07", "ntx10", "ntx11"},
+		{"n1", "n2", "r1", "r2", "rt05", "rt06", "rt07", "rtx10", "rtx11"},
 	}
 
 	for i := range inputs {
