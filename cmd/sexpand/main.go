@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lcrownover/sexpand/pkg/sexpand"
+	"github.com/lcrownover/sexpand-go/pkg/sexpand"
 )
 
 func main() {
