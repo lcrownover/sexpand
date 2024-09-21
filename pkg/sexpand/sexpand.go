@@ -1,9 +1,7 @@
-package main
+package sexpand
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -217,17 +215,3 @@ func SExpand(s string) ([]string, error) {
 	return nodes, nil
 }
 
-func main() {
-	flag.Parse()
-	args := flag.Args()
-	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "usage: provide a SLURM node range expression as the only arg")
-		os.Exit(1)
-	}
-	nodes, err := SExpand(args[0])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	fmt.Println(strings.Join(nodes, ","))
-}
