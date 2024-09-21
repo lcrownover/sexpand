@@ -1,4 +1,4 @@
-# sexpand-go
+# sexpand
 
 SLURM node name expander library and binary
 
